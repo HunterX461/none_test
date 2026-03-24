@@ -1,31 +1,31 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from analyzer.ast_parser import generate_ast
 from detectors.unhandled_calls import analyze_ast_for_low_level_calls
-
-def get_line_from_offset(file_path, offset):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-        return content[:int(offset)].count('\n') + 1
+from detectors.access_control import analyze_ast_for_access_control
+from analyzer.chaining_engine import VulnerabilityChainer
 
 def scan_file(sol_file):
     ast = generate_ast(sol_file)
     if not ast:
-        print("[-] Could not generate AST.")
+        print("[-] Could not generate AST. Make sure solc is installed.")
         return
 
     results = []
-    print("[*] Analyzing logic tree...")
-    analyze_ast_for_low_level_calls(ast, sol_file, results)
+    print(f"[*] Scanning {sol_file} for isolated weaknesses...")
     
-    if results:
-        print("\n[!] Vulnerabilities Found:")
-        for res in results:
-            line_num = get_line_from_offset(sol_file, res["offset"])
-            print(f"  -> {res['type']} in {res['file']} at Line {line_num}: {res['description']}")
-    else:
-        print("\n[+] No obvious logical vulnerabilities found in AST.")
+    # Run all detectors
+    analyze_ast_for_low_level_calls(ast, sol_file, results)
+    analyze_ast_for_access_control(ast, sol_file, results)
+    
+    print(f"[*] Found {len(results)} isolated weaknesses. Sending to Chaining Engine...")
+
+    # Initialize the creative Chaining Engine
+    chainer = VulnerabilityChainer(results)
+    chainer.analyze()
+    chainer.print_chains()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
