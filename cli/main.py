@@ -90,7 +90,7 @@ class RepoScanner:
         print("[*] Scanning all files...\n")
         
         # Only scan src/ files with LLM (skip tests and scripts for speed)
-        src_files = [f for f in self.sol_files if '/src/' in f and not f.endswith('.t.sol')]
+        src_files = [f for f in self.sol_files if '/src/' in f and '/interfaces/' not in f and not f.endswith('.t.sol')]
         script_files = [f for f in self.sol_files if '/src/' not in f]
         
         print(f"[*] Priority: {len(src_files)} source files + {len(script_files)} other files\n")
