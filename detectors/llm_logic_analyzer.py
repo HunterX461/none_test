@@ -33,7 +33,7 @@ class LLMLogicAnalyzer:
         prompt = f"Find security vulnerabilities in this Solidity code:\n\n{code_snippet}\n\nReturn JSON: " + '{"vulnerabilities": [{"type": "...", "description": "..."}]}'
         
         try:
-            print(f"    [LLM] Querying Mistral...")
+            print(f"    [LLM] Querying Orca-Mini...")
             response = requests.post(
                 self.api_url,
                 json={
