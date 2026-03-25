@@ -12,10 +12,10 @@ class LLMLogicAnalyzer:
         
         code_snippet = source_code[:3000]
         
-        prompt = f"""You are an Elite Legendary senior Solidity security auditor. Analyze this smart contract for logic vulnerabilities.
+        prompt = """You are a senior Solidity security auditor. Analyze this smart contract for logic vulnerabilities.
 
-FILE: {file_name}
+FILE: """ + file_name + """
 
 SOLIDITY CODE:
 ```solidity
-{code_snippet}
+""" + code_snippet + """
