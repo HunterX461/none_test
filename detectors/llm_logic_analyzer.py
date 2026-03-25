@@ -17,11 +17,9 @@ class LLMLogicAnalyzer:
                 print(f"[+] Ollama connected successfully")
                 models = response.json().get("models", [])
                 print(f"[+] Available models: {[m.get('name') for m in models]}")
-            else:
-                print(f"[-] Ollama returned status {response.status_code}")
         except Exception as e:
-            print(f"[-] ERROR: Cannot connect to Ollama at {self.base_url}")
-            print(f"[-] Make sure Ollama is running: ollama serve")
+            print(f"[-] ERROR: Cannot connect to Ollama")
+            print(f"[-] Start it with: ollama serve")
             sys.exit(1)
     
     def analyze_contract(self, source_code, file_name):
@@ -30,20 +28,21 @@ class LLMLogicAnalyzer:
         if not source_code or len(source_code.strip()) < 50:
             return []
         
-        code_snippet = source_code[:1500]
+        code_snippet = source_code[:1000]
         
-        prompt = f"Analyze this Solidity code for security issues:\n\n{code_snippet}\n\nList any vulnerabilities found in JSON format with 'vulnerabilities' key."
+        prompt = f"Find security vulnerabilities in this Solidity code:\n\n{code_snippet}\n\nReturn JSON: " + '{"vulnerabilities": [{"type": "...", "description": "..."}]}'
         
         try:
+            print(f"    [LLM] Querying Mistral...")
             response = requests.post(
                 self.api_url,
                 json={
                     "model": self.model,
                     "prompt": prompt,
                     "stream": False,
-                    "temperature": 0.2
+                    "temperature": 0.1
                 },
-                timeout=60
+                timeout=300  # INCREASED FROM 60 to 300 seconds
             )
             
             if response.status_code != 200:
@@ -53,7 +52,8 @@ class LLMLogicAnalyzer:
             result = response.json()
             response_text = result.get("response", "").strip()
             
-            print(f"    [LLM] Response received for {file_name}")
+            if "vulnerabilities" in response_text.lower():
+                print(f"    [LLM] Response received")
             
             try:
                 json_start = response_text.find("{")
@@ -76,19 +76,17 @@ class LLMLogicAnalyzer:
                             findings.append(finding)
                     
                     if findings:
-                        print(f"    [!] LLM found {len(findings)} issues")
+                        print(f"    [!] Found {len(findings)} issues")
                     
                     return findings
-            except json.JSONDecodeError as e:
-                print(f"    [!] Could not parse JSON: {str(e)[:50]}")
+            except json.JSONDecodeError:
                 return []
         
         except requests.exceptions.Timeout:
-            print(f"    [!] LLM timeout for {file_name} - taking too long")
+            print(f"    [!] LLM still timing out (CPU too slow)")
             return []
         except requests.exceptions.ConnectionError:
             print(f"    [!] Ollama connection lost")
             return []
         except Exception as e:
-            print(f"    [!] LLM error: {str(e)[:60]}")
             return []
