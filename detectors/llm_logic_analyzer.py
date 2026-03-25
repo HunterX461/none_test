@@ -3,7 +3,7 @@ import json
 import sys
 
 class LLMLogicAnalyzer:
-    def __init__(self, model="mistral", base_url="http://localhost:11434"):
+    def __init__(self, model="orca-mini", base_url="http://localhost:11434"):
         self.model = model
         self.base_url = base_url
         self.api_url = f"{base_url}/api/generate"
